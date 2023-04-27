@@ -39,19 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'destination',
+    'accounts',
     'flight',
-     'cloudinary',
-   
- 
-
-    'crispy_forms',
-    'django_filters',
-     'widget_tweaks',
-     'mathfilters',
-  
-     'django_countries',
-      'fontawesomefree'
-
 ]
 
 MIDDLEWARE = [
@@ -89,14 +78,9 @@ WSGI_APPLICATION = 'flightReservation.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
-       'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'flight',
-        'USER' :'postgres',
-        'PASSWORD' : 'admin',
-        'HOST' :'localhost'
-        
-        
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -146,6 +130,7 @@ MEDIA_ROOT =os.path.join(BASE_DIR ,'media')
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
-#DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'flight.User'
+
+#AUTH_USER_MODEL = 'accounts.User'
