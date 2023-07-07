@@ -2,9 +2,9 @@
 import re
 import pandas as pd
 
-import urllib.request
+import urllib.request 
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect
-from django.urls import reverse
+from django.urls import reverse 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -44,7 +44,7 @@ except:
 def index(request):
 
     with urllib.request.urlopen("https://gettocenter.com/airports/top-100-airports-in-world") as url:
-        soup = bs(url, features="html.parser")
+        soup = bs(url, features="html.parser") 
 
         headings = ['city','airport','code','country']
         pdd = pd.DataFrame(columns=headings)
@@ -351,7 +351,7 @@ def bookings(request):
         tickets = Ticket.objects.filter(user=request.user).order_by('-booking_date')
 
         context={ 'page': 'bookings','tickets': tickets}
-        return render(request, 'flight/bookings.html', context)
+        return render(request, 'flights/bookings.html', context)
     
 
     else:
@@ -385,11 +385,11 @@ def payment(request):
                     ticket2 = Ticket.objects.get(id=ticket2_id)
                     ticket2.status = 'CONFIRMED'
                     ticket2.save()
-                    return render(request, 'flight/payment_process.html', {
+                    return render(request, 'flights/payment_process.html', {
                         'ticket1': ticket,
                         'ticket2': ticket2
                     })
-                return render(request, 'flight/payment_process.html', {
+                return render(request, 'flights/payment_process.html', {
                     'ticket1': ticket,
                     'ticket2': ""
                 })
@@ -403,15 +403,100 @@ def payment(request):
 
 
 
+def ticket_data(request, ref):
+    ticket = Ticket.objects.get(ref_no=ref)
+    return JsonResponse({
+        'ref': ticket.ref_no,
+        'from': ticket.flight.origin.code,
+        'to': ticket.flight.destination.code,
+        'flight_date': ticket.flight_ddate,
+        'status': ticket.status
+    })
+
+
+
+@csrf_exempt
+def get_ticket(request):
+    ref = request.GET.get("ref")
+    ticket1 = Ticket.objects.get(ref_no=ref)
+    data = {
+        'ticket1':ticket1,
+        'current_year': datetime.now().year
+    }
+    pdf = render_to_pdf('flights/ticket.html', data)
+    return HttpResponse(pdf, content_type='application/pdf')
+
+
+def bookings(request):
+    if request.user.is_authenticated:
+        tickets = Ticket.objects.filter(user=request.user).order_by('-booking_date')
+        return render(request, 'flights/bookings.html', {
+            'page': 'bookings',
+            'tickets': tickets
+        })
+    else:
+        return HttpResponseRedirect(reverse('login'))
+    
+
+
+@csrf_exempt
+def cancel_ticket(request):
+    if request.method == 'POST':
+        if request.user.is_authenticated:
+            ref = request.POST['ref']
+            try:
+                ticket = Ticket.objects.get(ref_no=ref)
+                if ticket.user == request.user:
+                    ticket.status = 'CANCELLED'
+                    ticket.save()
+                    return JsonResponse({'success': True})
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'error': "User unauthorised"
+                    })
+            except Exception as e:
+                return JsonResponse({
+                    'success': False,
+                    'error': e
+                })
+        else:
+            return HttpResponse("User unauthorised")
+    else:
+        return HttpResponse("Method must be POST.")
+    
+
+def resume_booking(request):
+    if request.method == 'POST':
+        if request.user.is_authenticated:
+            ref = request.POST['ref']
+            ticket = Ticket.objects.get(ref_no=ref)
+            if ticket.user == request.user:
+                return render(request, "flights/payment.html", {
+                    'fare': ticket.total_fare,
+                    'ticket': ticket.id
+                })
+            else:
+                return HttpResponse("User unauthorised")
+        else:
+            return HttpResponseRedirect(reverse("login"))
+    else:
+        return HttpResponse("Method must be post.")
+    
+
+
 def contact(request):
-    return render(request, 'flight/contact.html')
+    return render(request, 'flights/contact.html')
 
 def privacy_policy(request):
-    return render(request, 'flight/privacy-policy.html')
+    return render(request, 'flights/privacy-policy.html')
 
 def terms_and_conditions(request):
-    return render(request, 'flight/terms.html')
+    return render(request, 'flights/terms.html')
 
 def about_us(request):
-    return render(request, 'flight/about.html')
+    return render(request, 'flights/about.html')
+
+
+
 
